@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: telegram-price-bot
+    env: python
+    plan: free
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: PORT
+        value: "10000"
+    buildCommand: ./build.sh
+    startCommand: python price_bot.py
+    pythonVersion: 3.11.7
