@@ -3,8 +3,6 @@ import random
 import asyncio
 import logging
 import os
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from playwright.async_api import async_playwright
 from telegram import Update
@@ -42,7 +40,6 @@ async def scrape_flipkart_price(url: str, max_retries: int = 3) -> str:
                                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
                 )
                 page = await context.new_page()
-
                 await page.goto(url, timeout=90000, wait_until="domcontentloaded")
                 await page.wait_for_timeout(random.randint(800, 2000))
 
@@ -101,7 +98,6 @@ async def scrape_amazon_price(url: str, max_retries: int = 3) -> str:
                                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
                 )
                 page = await context.new_page()
-
                 await page.goto(url, timeout=90000, wait_until="domcontentloaded")
                 await page.wait_for_timeout(random.randint(800, 2000))
 
@@ -158,35 +154,33 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(reply)
 
 
+# -----------------------------
+# Run Telegram Bot (Webhook mode)
+# -----------------------------
 def run_bot():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("compare", compare))
-    app.run_polling()
 
+    # Render gives a PORT environment variable
+    port = int(os.environ.get("PORT", 8080))
 
-# -----------------------------
-# Dummy HTTP server for Render health check
-# -----------------------------
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot is running!")
+    # External URL for Render (set in settings or use env var)
+    webhook_base_url = os.environ.get("RENDER_EXTERNAL_URL")
+    if not webhook_base_url:
+        raise RuntimeError("❌ Please set RENDER_EXTERNAL_URL in Render (e.g. https://your-app.onrender.com)")
 
-def start_health_server():
-    port = int(os.environ.get("PORT", 8080))  # Render requires binding to $PORT
-    server = HTTPServer(("0.0.0.0", port), HealthHandler)
-    logging.info(f"Dummy HTTP server running on port {port}")
-    server.serve_forever()
+    # use BOT_TOKEN as url path for some obscurity
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=port,
+        url_path=BOT_TOKEN,
+        webhook_url=f"{webhook_base_url}/{BOT_TOKEN}"
+    )
 
 
 # -----------------------------
 # Main Entry
 # -----------------------------
 if __name__ == "__main__":
-    # Start dummy webserver in background thread
-    threading.Thread(target=start_health_server, daemon=True).start()
-
-    # Run the actual bot (polls Telegram)
     run_bot()
