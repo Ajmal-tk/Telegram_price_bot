@@ -9,9 +9,16 @@ import os
 
 logging.basicConfig(level=logging.INFO)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_TOKEN_HERE")
-if not BOT_TOKEN:
-    raise RuntimeError("❌ BOT_TOKEN is not set. Please set BOT_TOKEN in Render environment variables.")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+print(f"[DEBUG] BOT_TOKEN in env? {bool(BOT_TOKEN)}")
+if BOT_TOKEN:
+    print(f"[DEBUG] First 10 chars of token: {BOT_TOKEN[:10]}********")
+
+if not BOT_TOKEN or ":" not in BOT_TOKEN:
+    raise InvalidToken(
+        "❌ BOT_TOKEN is missing or misconfigured. Please check Render Environment Variables."
+    )
 # -----------------------------
 # Flipkart Scraper
 # -----------------------------
