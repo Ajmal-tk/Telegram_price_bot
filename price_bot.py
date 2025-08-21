@@ -91,6 +91,13 @@ class PriceBot:
             price = soup.select_one("div._30jeq3")
             if title and price:
                 return f"{title.get_text(strip=True)} - {price.get_text(strip=True)}"
+
+            content = await page.content()
+
+            # DEBUG: log first 1000 chars of the page to Render logs
+            print("="*40)
+            print(f"HTML snippet for {url}:\n{content[:1000]}")
+            print("="*40)
         except Exception as e:
             print("Flipkart error:", e)
         return None
@@ -114,6 +121,13 @@ class PriceBot:
             price = product.select_one("span.a-price-whole")
             if title and price:
                 return f"{title.get_text(strip=True)} - ₹{price.get_text(strip=True)}"
+
+            content = await page.content()
+
+            # DEBUG: log first 1000 chars of the page to Render logs
+            print("="*40)
+            print(f"HTML snippet for {url}:\n{content[:1000]}")
+            print("="*40)   
         except Exception as e:
             print("Amazon error:", e)
         return None
